@@ -17,20 +17,24 @@ type ContractConfig struct {
 	// 合约地址
 	ContractAccount string
 	// 合约路径
-	CodePath        string
+	CodePath string
 
 	// 模块名：wasm/native/evm
-	ModuleName      string
+	ModuleName string
 	// 合约名
-	ContractName    string
-	// 方法名
-	MethodName      string
+	ContractName string
+	// invoke方法名
+	MethodInvokeName string
+	// query方法名
+	MethodQueryName string
+	// 方法类型
+	MethodType string
 
 	// 自定义参数
-	Args            map[string]string
+	Args map[string]string
 }
 
-type NewContract func (config *ContractConfig, client *xuper.XClient) (Contract, error)
+type NewContract func(config *ContractConfig, client *xuper.XClient) (Contract, error)
 
 // 注册合约
 var contracts = make(map[string]NewContract, 8)
@@ -46,4 +50,3 @@ func GetContract(config *ContractConfig, client *xuper.XClient) (Contract, error
 
 	return nil, fmt.Errorf("contract not exist")
 }
-

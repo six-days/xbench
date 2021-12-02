@@ -10,19 +10,19 @@ import (
 	"github.com/xuperchain/xuperchain/service/pb"
 )
 
-type postTx struct{
+type postTx struct {
 	benchmark   string
 	concurrency int
 	config      *runner.Config
 
-	generator   cases.Generator
+	generator cases.Generator
 }
 
 func NewPostTx(config *runner.Config) (Provider, error) {
 	t := &postTx{
-		benchmark: config.Tags[cases.Benchmark],
+		benchmark:   config.Tags[cases.Benchmark],
 		concurrency: int(config.C),
-		config: config,
+		config:      config,
 	}
 
 	if config.CEnd > config.C {
@@ -31,9 +31,9 @@ func NewPostTx(config *runner.Config) (Provider, error) {
 
 	var err error
 	conf := &cases.Config{
-		Host: config.Host,
+		Host:        config.Host,
 		Concurrency: t.concurrency,
-		Args: config.Tags,
+		Args:        config.Tags,
 	}
 	t.generator, err = cases.GetGenerator(t.benchmark, conf)
 	if err != nil {
@@ -49,7 +49,7 @@ func NewPostTx(config *runner.Config) (Provider, error) {
 
 func (t *postTx) DataProvider(run *runner.CallData) ([]*dynamic.Message, error) {
 	workID := lib.WorkID(run.WorkerID)
-	v, err :=  t.generator.Generate(workID)
+	v, err := t.generator.Generate(workID)
 	if err != nil {
 		return nil, err
 	}
@@ -75,4 +75,5 @@ func (t *postTx) DataProvider(run *runner.CallData) ([]*dynamic.Message, error) 
 
 func init() {
 	RegisterProvider(CallPostTx, NewPostTx)
+	RegisterProvider(CallQueryTx, NewPostTx)
 }

@@ -11,8 +11,8 @@ function buildBench() {
     rm -rf "${Output:?}/"*
     mkdir -p "$Output/bin"
 
-    go build -o $Output/bin/xbench $WorkPath/cmd/xbench/main.go
-    go build -o $Output/bin/generate $WorkPath/cmd/generate/main.go
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $Output/bin/xbench $WorkPath/cmd/xbench/main.go
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o $Output/bin/generate $WorkPath/cmd/generate/main.go
 
     cp -r $WorkPath/conf $Output
     cp -r $WorkPath/data $Output

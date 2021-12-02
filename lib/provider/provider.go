@@ -10,8 +10,9 @@ import (
 const BlockChain = "xuper"
 
 const (
-	CallPostTx = "pb.Xchain.PostTx"
+	CallPostTx  = "pb.Xchain.PostTx"
 	CallPreExec = "pb.Xchain.PreExec"
+	CallQueryTx = "pb.Xchain.QueryTx"
 )
 
 // provider：为 ghz 发压工具提供压测数据，不同的grpc接口有不同的实现
@@ -19,10 +20,11 @@ type Provider interface {
 	DataProvider(*runner.CallData) ([]*dynamic.Message, error)
 }
 
-type NewProvider func (config *runner.Config) (Provider, error)
+type NewProvider func(config *runner.Config) (Provider, error)
 
 // 注册数据生成器
 var providers = make(map[string]NewProvider, 8)
+
 func RegisterProvider(name string, provider NewProvider) {
 	providers[name] = provider
 }

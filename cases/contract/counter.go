@@ -2,7 +2,6 @@ package contracts
 
 import (
 	"fmt"
-
 	"github.com/xuperchain/xuper-sdk-go/v2/account"
 	"github.com/xuperchain/xuper-sdk-go/v2/xuper"
 )
@@ -21,7 +20,6 @@ func NewCounter(config *ContractConfig, client *xuper.XClient) (Contract, error)
 	return t, nil
 }
 
-
 func (t *counter) Deploy(from *account.Account, name string, code []byte, args map[string]string, opts ...xuper.RequestOption) (*xuper.Transaction, error) {
 	args = map[string]string{
 		"creator": from.Address,
@@ -32,17 +30,16 @@ func (t *counter) Deploy(from *account.Account, name string, code []byte, args m
 
 func (t *counter) Invoke(from *account.Account, name, method string, args map[string]string, opts ...xuper.RequestOption) (*xuper.Transaction, error) {
 	//id, _ := strconv.Atoi(args["id"])
-	args = map[string]string {
+	args = map[string]string{
 		"key": fmt.Sprintf("test_%s", from.Address),
 	}
 	return t.client.InvokeWasmContract(from, name, method, args, opts...)
 }
 
 func (t *counter) Query(from *account.Account, name, method string, args map[string]string, opts ...xuper.RequestOption) (*xuper.Transaction, error) {
-	args = map[string]string {
-		"key": fmt.Sprintf("test_%s", from.Address),
+	args = map[string]string{
+		"key": "creator",
 	}
-
 	return t.client.QueryWasmContract(from, name, method, args, opts...)
 }
 

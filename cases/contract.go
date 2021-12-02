@@ -17,6 +17,13 @@ import (
 
 const WaitDeploy = 5 // 等待所有节点完成合约部署 5s
 
+const (
+	InvokeMethodType = "invoke"
+	QueryMethodType  = "query"
+)
+
+var initTx *xuper.Transaction
+
 // 调用sdk生成tx
 type contract struct {
 	host        string
@@ -25,11 +32,11 @@ type contract struct {
 	amount      string
 	waitDeploy  int
 
-	config      *contracts.ContractConfig
-	contract    contracts.Contract
+	config   *contracts.ContractConfig
+	contract contracts.Contract
 
-	client      *xuper.XClient
-	accounts    []*account.Account
+	client   *xuper.XClient
+	accounts []*account.Account
 }
 
 func NewContract(config *Config) (Generator, error) {
@@ -39,20 +46,22 @@ func NewContract(config *Config) (Generator, error) {
 	}
 
 	t := &contract{
-		host: config.Host,
+		host:        config.Host,
 		concurrency: config.Concurrency,
-		split: 10,
-		amount: config.Args["amount"],
-		waitDeploy: waitDeploy,
+		split:       10,
+		amount:      config.Args["amount"],
+		waitDeploy:  waitDeploy,
 
 		config: &contracts.ContractConfig{
 			ContractAccount: config.Args["contract_account"],
-			CodePath: config.Args["code_path"],
+			CodePath:        config.Args["code_path"],
 
-			ModuleName: config.Args["module_name"],
-			ContractName: config.Args["contract_name"],
-			MethodName: config.Args["method_name"],
-			Args: config.Args,
+			ModuleName:       config.Args["module_name"],
+			ContractName:     config.Args["contract_name"],
+			MethodInvokeName: config.Args["method_invoke_name"],
+			MethodQueryName:  config.Args["method_query_name"],
+			MethodType:       config.Args["method_type"],
+			Args:             config.Args,
 		},
 	}
 
@@ -114,12 +123,22 @@ func (t *contract) Init() error {
 	log.Printf("deploy contract done")
 
 	// 等待部署合约完成
-	time.Sleep(time.Duration(t.waitDeploy)*time.Second)
+	time.Sleep(time.Duration(t.waitDeploy) * time.Second)
 
 	// 转账给调用合约的账户
 	_, err = lib.InitTransfer(t.client, lib.Bank, t.accounts, t.amount, t.split)
 	if err != nil {
 		return fmt.Errorf("contract to test accounts error: %v", err)
+	}
+
+	// 如果是query合约，先invoke一次
+	args := map[string]string{
+		"id": strconv.Itoa(0),
+	}
+	initTx, err = t.contract.Invoke(t.accounts[0], t.config.ContractName, t.config.MethodInvokeName, args)
+	if err != nil {
+		log.Printf("invoke contract error: %v, address=%s", err, t.accounts[0])
+		return err
 	}
 
 	log.Printf("init done")
@@ -128,16 +147,27 @@ func (t *contract) Init() error {
 
 func (t *contract) Generate(id int) (proto.Message, error) {
 	from := t.accounts[id]
-	args := map[string]string {
+	args := map[string]string{
 		"id": strconv.Itoa(id),
 	}
-	tx, err := t.contract.Invoke(from, t.config.ContractName, t.config.MethodName, args, xuper.WithNotPost())
-	if err != nil {
-		log.Printf("generate tx error: %v, address=%s", err, from.Address)
-		return nil, err
-	}
 
-	return tx.Tx, nil
+	// 测试查询合约
+	if t.config.MethodType == QueryMethodType {
+		_, err := t.contract.Query(from, t.config.ContractName, t.config.MethodQueryName, args, xuper.WithNotPost())
+		if err != nil {
+			log.Printf("query contract error: %v, address=%s", err, from.Address)
+			return nil, err
+		}
+		return initTx.Tx, nil
+	} else {
+		// 测试调用合约
+		tx, err := t.contract.Invoke(from, t.config.ContractName, t.config.MethodInvokeName, args, xuper.WithNotPost())
+		if err != nil {
+			log.Printf("invoke contract error: %v, address=%s", err, from.Address)
+			return nil, err
+		}
+		return tx.Tx, nil
+	}
 }
 
 func init() {

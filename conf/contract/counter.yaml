@@ -1,7 +1,8 @@
 # 压测配置
 total: 500000               # 请求总量
 concurrency: 100            # 并发量
-
+isCallSet: true
+call: pb.Xchain.QueryTx     # 请求方式，可选pb.Xchain.PostTx|pb.Xchain.QueryTx
 # 压测case参数
 tags:
   benchmark: "contract"     # 压测类型
@@ -12,7 +13,9 @@ tags:
 
   module_name: "wasm"       # 合约类型
   contract_name: "counter"  # 合约名
-  method_name: "increase"   # 合约方法
+  method_invoke_name: "increase"   # 合约方法
+  method_query_name: "get"   # 合约方法
+  method_type: "invoke"   # 方法类型，invoke|query
 
 # 压测节点
 host: "127.0.0.1:32101"
